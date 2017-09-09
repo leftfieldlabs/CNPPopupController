@@ -53,6 +53,7 @@ static inline UIViewAnimationOptions UIViewAnimationCurveToAnimationOptions(UIVi
             self.blurEffectView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
             self.blurEffectView.frame = self.maskView.bounds;
             self.blurEffectView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            self.blurEffectView.alpha = 0.0;
             
             [self.maskView addSubview:self.blurEffectView];
         }
@@ -148,7 +149,6 @@ CGFloat CNP_UIInterfaceOrientationAngleOfOrientation(UIInterfaceOrientation orie
     if (self.theme.popupStyle == CNPPopupStyleActionSheet) {
         self.theme.presentationStyle = CNPPopupPresentationStyleSlideInFromBottom;
     }
-    self.blurEffectView.alpha = self.theme.blurEffectAlpha;
     self.popupView.layer.cornerRadius = self.theme.popupStyle == CNPPopupStyleCentered?self.theme.cornerRadius:0;
     self.popupView.backgroundColor = self.theme.backgroundColor;
     UIColor *maskBackgroundColor;
@@ -293,8 +293,16 @@ CGFloat CNP_UIInterfaceOrientationAngleOfOrientation(UIInterfaceOrientation orie
     self.maskView.alpha = 0;
     [UIView animateWithDuration:flag?self.theme.animationDuration:0.0 animations:^{
         self.maskView.alpha = 1.0;
-        self.popupView.center = [self endingPoint];;
+        self.popupView.center = [self endingPoint];
+        self.blurEffectView.alpha = 0;
     } completion:^(BOOL finished) {
+        // animate on blur
+        [UIView animateWithDuration:self.theme.blurEffectDuration animations:^{
+            self.blurEffectView.alpha = self.theme.blurEffectAlpha;
+        } completion:^(BOOL finished) {
+            self.blurEffectView.alpha = self.theme.blurEffectAlpha;
+        }];
+        
         self.popupView.userInteractionEnabled = YES;
         if ([self.delegate respondsToSelector:@selector(popupControllerDidPresent:)]) {
             [self.delegate popupControllerDidPresent:self];
@@ -308,6 +316,7 @@ CGFloat CNP_UIInterfaceOrientationAngleOfOrientation(UIInterfaceOrientation orie
     }
     [UIView animateWithDuration:flag?self.theme.animationDuration:0.0 animations:^{
         self.maskView.alpha = 0.0;
+        self.blurEffectView.alpha = 0.0;
         self.popupView.center = [self dismissedPoint];;
     } completion:^(BOOL finished) {
         [self.maskView removeFromSuperview];
@@ -451,6 +460,7 @@ CGFloat CNP_UIInterfaceOrientationAngleOfOrientation(UIInterfaceOrientation orie
     defaultTheme.maxPopupWidth = 300.0f;
     defaultTheme.animationDuration = 0.3f;
     defaultTheme.blurEffectAlpha = 0.0f;
+    defaultTheme.blurEffectDuration = 0.2f;
     return defaultTheme;
 }
 
