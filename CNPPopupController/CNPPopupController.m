@@ -23,6 +23,7 @@ static inline UIViewAnimationOptions UIViewAnimationCurveToAnimationOptions(UIVi
 @property (nonatomic, strong) UIVisualEffectView *blurEffectView;
 @property (nonatomic, strong) UITapGestureRecognizer *backgroundTapRecognizer;
 @property (nonatomic, strong) UIView *popupView;
+@property (nonatomic, assign) CGFloat keyboardUpHeightOffset;
 @property (nonatomic, strong) NSArray <UIView *> *views;
 @property (nonatomic) BOOL dismissAnimated;
 
@@ -36,6 +37,9 @@ static inline UIViewAnimationOptions UIViewAnimationCurveToAnimationOptions(UIVi
     if (self) {
         
         self.views = contents;
+        
+        // ofset when keyboard is up
+        self.keyboardUpHeightOffset = 120.0;
         
         self.popupView = [[UIView alloc] initWithFrame:CGRectZero];
         self.popupView.backgroundColor = [UIColor whiteColor];
@@ -244,13 +248,16 @@ CGFloat CNP_UIInterfaceOrientationAngleOfOrientation(UIInterfaceOrientation orie
 
 - (void)keyboardWithEndFrame:(CGRect)keyboardFrame willShowAfterDuration:(NSTimeInterval)duration withOptions:(UIViewAnimationOptions)options
 {
-    CGRect popupViewIntersection = CGRectIntersection(self.popupView.frame, keyboardFrame);
+    CGRect popupFrame = CGRectMake(0, 0, self.popupView.frame.size.width, self.popupView.frame.size.height);
+    CGRect popupViewIntersection = CGRectIntersection(popupFrame, keyboardFrame);
     
     if (popupViewIntersection.size.height > 0) {
         CGRect maskViewIntersection = CGRectIntersection(self.maskView.frame, keyboardFrame);
         
         [UIView animateWithDuration:duration delay:0.0f options:options animations:^{
-            self.popupView.center = CGPointMake(self.popupView.center.x, (CGRectGetHeight(self.maskView.frame) - maskViewIntersection.size.height) / 2);
+            
+            CGPoint center = CGPointMake(self.popupView.center.x, CGRectGetHeight(self.maskView.frame) - (self.popupView.frame.size.height / 2) - keyboardFrame.size.height + self.keyboardUpHeightOffset);
+            
         } completion:nil];
     }
 }
